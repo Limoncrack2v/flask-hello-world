@@ -3,10 +3,7 @@ import psycopg2
 from dotenv import load_dotenv
 import os
 
-# Load environment variables from .env
 load_dotenv()
-
-# Fetch variables
 CONNECTION_STRING = os.getenv("CONNECTION_STRING")
 
 app = Flask(__name__)
@@ -21,29 +18,23 @@ def about():
 
 @app.route('/sensor')
 def sensor():
-    # Connect to the database
+    connection = None
     try:
         connection = psycopg2.connect(CONNECTION_STRING)
-        print("Connection successful!")
-        
-        # Create a cursor to execute SQL queries
+        app.logger.info("Connection successful!")
+
         cursor = connection.cursor()
-        
-        # Example query
-        cursor.execute("select * from sensor_readings;")
+        cursor.execute("SELECT * FROM sensor_readings;")
         result = cursor.fetchone()
-        print("Current Time:", result)
-    
-        # Close the cursor and connection
-        cursor.close()
-        connection.close()
-        print("Connection closed.")
-        return f"Connectios succesful! {result}"
+
+        return f"Connection successful! {result}"
 
     except Exception as e:
-        print(f"Failed to connect: {e}")
+        app.logger.error(f"Failed to connect: {e}")
         return f"Failed to connect: {e}"
 
-
-
-
+    finally:
+        if connection:
+            cursor.close()
+            connection.close()
+            app.logger.info("Connection closed.")
