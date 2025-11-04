@@ -15,6 +15,8 @@ def home():
 @app.route('/about')
 def about():
     return 'About'
+    
+print(f"Connection string: {CONNECTION_STRING}")
 
 @app.route('/sensor')
 def sensor():
