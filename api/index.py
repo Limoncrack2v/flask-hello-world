@@ -23,27 +23,26 @@ def about():
 def sensor():
     # Connect to the database
     try:
-        connection = psycopg2.connect(
-        CONNECTION_STRING
-    )
-    print("Connection successful!")
+        connection = psycopg2.connect(CONNECTION_STRING)
+        print("Connection successful!")
+        
+        # Create a cursor to execute SQL queries
+        cursor = connection.cursor()
+        
+        # Example query
+        cursor.execute("select * from sensor_readings;")
+        result = cursor.fetchone()
+        print("Current Time:", result)
     
-    # Create a cursor to execute SQL queries
-    cursor = connection.cursor()
-    
-    # Example query
-    cursor.execute("SELECT NOW();")
-    result = cursor.fetchone()
-    print("Current Time:", result)
-
-    # Close the cursor and connection
-    cursor.close()
-    connection.close()
-    print("Connection closed.")
+        # Close the cursor and connection
+        cursor.close()
+        connection.close()
+        print("Connection closed.")
+        return f"Connectios succesful! {result}"
 
     except Exception as e:
         print(f"Failed to connect: {e}")
-    return 'Soy el sensor'
+        return f"Failed to connect: {e}"
 
 
 
