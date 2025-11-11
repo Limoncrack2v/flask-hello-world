@@ -1,17 +1,21 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask,request, jsonify, render_template
 import psycopg2
 from dotenv import load_dotenv
 import os
 
-# Cargar variables de entorno desde .env
+# Load environment variables from .env
 load_dotenv()
 
-# Obtener cadena de conexión
-CONNECTION_STRING = os.getenv("CONNECTION_STRING")
+# Fetch variables
+USER = os.getenv("user")
+PASSWORD = os.getenv("password")
+HOST = os.getenv("host")
+PORT = os.getenv("port")
+DBNAME = os.getenv("dbname")
+CONNECTION_STRING = os.getenv("connection_string")
 
 app = Flask(__name__)
 
-# Función auxiliar para conectar a la base
 def get_connection():
     return psycopg2.connect(CONNECTION_STRING)
 
@@ -25,25 +29,29 @@ def about():
 
 @app.route('/sensor')
 def sensor():
-    """Lee el primer registro de la tabla 'sensores'."""
+   # Connect to the database
     try:
-        conn = get_connection()
-        cur = conn.cursor()
-
-        cur.execute("SELECT * FROM sensores LIMIT 1;")
-        result = cur.fetchone()
-
-        cur.close()
-        conn.close()
-        return jsonify({"data": result})
-
+        connection = get_connection()
+        print("Connection successful!")
+        
+        # Create a cursor to execute SQL queries
+        cursor = connection.cursor()
+        
+        # Example query
+        cursor.execute("SELECT NOW();")
+        result = cursor.fetchone()
+        print("Current Time:", result)
+    
+        # Close the cursor and connection
+        cursor.close()
+        connection.close()
+        return f"Current Time: {result}"
+    
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-
+        return f"Failed to connect: {e}"
+    
 @app.route("/sensor/<int:sensor_id>", methods=["POST"])
 def insert_sensor_value(sensor_id):
-    """Inserta un nuevo valor del sensor."""
     value = request.args.get("value", type=float)
     if value is None:
         return jsonify({"error": "Missing 'value' query parameter"}), 400
@@ -52,15 +60,12 @@ def insert_sensor_value(sensor_id):
         conn = get_connection()
         cur = conn.cursor()
 
-        # Insertar registro
+        # Insert into sensors table
         cur.execute(
-            "INSERT INTO sensores (sensor_id, value) VALUES (%s, %s)",
+            "INSERT INTO sensors (sensor_id, value) VALUES (%s, %s)",
             (sensor_id, value)
         )
         conn.commit()
-
-        cur.close()
-        conn.close()
 
         return jsonify({
             "message": "Sensor value inserted successfully",
@@ -71,9 +76,55 @@ def insert_sensor_value(sensor_id):
     except psycopg2.Error as e:
         return jsonify({"error": str(e)}), 500
 
-@app.route('/pagina')
-def pagina():
-    return render_template("pagina.html")
-# Punto de entrada local
-if __name__ == '__main__':
+    finally:
+        if 'conn' in locals():
+            conn.close()
+
+
+@app.route("/sensor/<int:sensor_id>")
+def get_sensor(sensor_id):
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+
+        # Get the latest 10 values
+        cur.execute("""
+            SELECT value, created_at
+            FROM sensors
+            WHERE sensor_id = %s
+            ORDER BY created_at DESC
+            LIMIT 10;
+        """, (sensor_id,))
+        rows = cur.fetchall()
+
+        # Convert to lists for graph
+        values = [r[0] for r in rows][::-1]        # reverse for chronological order
+        timestamps = [r[1].strftime('%Y-%m-%d %H:%M:%S') for r in rows][::-1]
+        
+        return render_template("sensor.html", sensor_id=sensor_id, values=values, timestamps=timestamps, rows=rows)
+
+    except Exception as e:
+        return f"<h3>Error: {e}</h3>"
+
+    finally:
+        if 'conn' in locals():
+            conn.close()
+
+
+@app.route("/users")
+def users():
+    users = [
+        {"name": "Alice", "email": "alice@example.com", "role": "Admin"},
+        {"name": "Bob", "email": "bob@example.com", "role": "Editor"},
+        {"name": "Charlie", "email": "charlie@example.com", "role": "Viewer"},
+    ]
+
+    return render_template(
+        "index.html",
+        title="Flask Render Demo",
+        user="Miguel",
+        users=users
+    )
+
+if __name__ == "__main__":
     app.run(debug=True)
