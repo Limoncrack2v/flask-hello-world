@@ -36,7 +36,7 @@ def get_connection():
 
 @app.route('/')
 def home():
-    return '<h2>Flask + PostgreSQL running successfully 🚀</h2>'
+    return render_template("index.html")
 
 
 @app.route('/about')
