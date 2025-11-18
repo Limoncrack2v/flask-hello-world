@@ -30,7 +30,31 @@ def get_connection():
         )
     else:
         raise Exception("Database connection details are missing.")
+        
+def get_all_sensors():
+    """Obtiene una lista de todos los IDs de sensor únicos desde la tabla 'sensores'."""
+    sensors = []
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        
+        # Consulta para obtener los IDs únicos.
+        # Asumimos que tienes una columna llamada 'sensor_id' en la tabla 'sensores'.
+        cur.execute("SELECT DISTINCT sensor_id FROM sensores ORDER BY sensor_id ASC;")
+        
+        # Mapeamos los IDs a una lista de diccionarios para Jinja2
+        rows = cur.fetchall()
+        sensors = [{'id': row[0], 'name': f'Sensor {row[0]}'} for row in rows]
+        
+        return sensors
 
+    except Exception as e:
+        print(f"Error al obtener la lista de sensores: {e}")
+        return []
+    finally:
+        if conn:
+            conn.close()
 
 # ---------- ROUTES ----------
 
@@ -41,7 +65,17 @@ def home():
 
 @app.route('/about')
 def about():
-    return '<h3>About page — Flask PostgreSQL API Demo</h3>'
+    """Ruta principal que muestra la lista de IDs de sensor disponibles."""
+    
+    # 1. Ejecutar la consulta a la DB
+    sensor_list = get_all_sensors()
+    
+    # 2. Renderizar el template, pasando la lista de IDs
+    return render_template(
+        "index.html", 
+        title="Dashboard Principal", 
+        sensor_list=sensor_list
+    )
 
 
 @app.route('/sensor')
