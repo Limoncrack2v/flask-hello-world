@@ -20,10 +20,12 @@
             width: 70%;
             background: white;
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            cursor: pointer; /* Indica que las filas son clickeables */
         }
         th, td {
             padding: 12px 15px;
             border: 1px solid #dee2e6;
+            text-align: left; /* Alineación del texto a la izquierda para los datos */
         }
         th {
             background-color: #007bff;
@@ -32,12 +34,24 @@
         tr:nth-child(even) {
             background-color: #f2f2f2;
         }
+        /* Estilo para la fila seleccionada */
+        tr.selected {
+            background-color: #ffc107 !important; /* Amarillo de Bootstrap */
+            font-weight: bold;
+            color: #333;
+        }
         .card {
             display: inline-block;
             background: white;
             padding: 20px 40px;
             border-radius: 12px;
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        #selected-id-display {
+            margin-top: 15px;
+            font-size: 1.1em;
+            color: #28a745; /* Verde para el ID seleccionado */
         }
     </style>
 </head>
@@ -47,24 +61,57 @@
         <p>Welcome to the {{ title }}.</p>
     </div>
 
+    <div id="selected-id-display">
+        **ID Seleccionado:** **Ninguno**
+    </div>
+
     <h2>User List</h2>
     <table>
         <thead>
             <tr>
-                <th>Name</th>
+                <th>ID</th> <th>Name</th>
                 <th>Email</th>
                 <th>Role</th>
             </tr>
         </thead>
-        <tbody>
+        <tbody id="user-table-body">
             {% for person in users %}
-            <tr>
-                <td>{{ person.name }}</td>
+            <tr data-id="{{ person.id }}"> <td>{{ person.id }}</td> <td>{{ person.name }}</td>
                 <td>{{ person.email }}</td>
                 <td>{{ person.role }}</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const tableBody = document.getElementById('user-table-body');
+            const selectedIdDisplay = document.getElementById('selected-id-display');
+
+            tableBody.addEventListener('click', (event) => {
+                let row = event.target.closest('tr'); // Encuentra el <tr> más cercano
+
+                if (row && row.hasAttribute('data-id')) {
+                    // 1. Quitar la clase 'selected' de todas las filas
+                    document.querySelectorAll('#user-table-body tr').forEach(r => {
+                        r.classList.remove('selected');
+                    });
+
+                    // 2. Añadir la clase 'selected' a la fila clickeada
+                    row.classList.add('selected');
+
+                    // 3. Obtener el ID
+                    const selectedId = row.getAttribute('data-id');
+
+                    // 4. Mostrar el ID seleccionado
+                    selectedIdDisplay.innerHTML = `**ID Seleccionado:** **${selectedId}**`;
+
+                    // Opcional: Puedes hacer algo más con 'selectedId', como enviarlo a un backend.
+                    console.log('ID seleccionado:', selectedId);
+                }
+            });
+        });
+    </script>
 </body>
 </html>
