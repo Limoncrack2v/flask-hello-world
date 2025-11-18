@@ -41,7 +41,7 @@ def get_all_sensors():
         
         # Consulta para obtener los IDs únicos.
         # Asumimos que tienes una columna llamada 'sensor_id' en la tabla 'sensores'.
-        cur.execute("SELECT DISTINCT sensor_id FROM sensores ORDER BY sensor_id ASC;")
+        cur.execute("SELECT sensor_id FROM sensores;")
         
         # Mapeamos los IDs a una lista de diccionarios para Jinja2
         rows = cur.fetchall()
